@@ -17,6 +17,7 @@ import re
 import pandas as pd
 from osgeo import gdal
 import os
+import pickle
 
 
 ### 2. Functions 
@@ -132,7 +133,19 @@ def to_tif(arr, tran):
     dst_ds.FlushCache()
     dst_ds = None
 
-
+def formalizeX(res, n):
+    X1 = res.X[n]
+    fron = []
+    for i in range(len(d8b)):
+        fron.append([])
+        for j in range(len(d8b[i])):
+            if d8b[i][j] == 0:
+                fron[i].append(-1)
+            else:
+                fron[i].append(X1[d8b[i][j]-1])
+    X = np.array(fron)
+    return X
+    
 def oriarray(d8array):
     idtemp = 0
     d8e = []
@@ -446,13 +459,40 @@ class SWMMOPTIM(Problem):
 problem = SWMMOPTIM()
 
 algorithm = NSGA2(
-    pop_size=50,
-    n_offsprings=50,
+    pop_size=Popu,
+    n_offsprings=Popu,
     sampling=get_sampling("int_random"),
     crossover=get_crossover("int_sbx", prob=0.9, eta=15),
     mutation=get_mutation("int_pm", eta=20),
     eliminate_duplicates=True
 )
-termination = get_termination("n_gen", 200)
+termination = get_termination("n_gen", Gene)
             
+Flag = input("Whether to start the optimization process?(Y/N)")
+
             
+if Flag == "Y":
+    res = minimize(problem,
+               algorithm,
+               termination,
+               seed=1,
+               save_history=True,
+               verbose=True)
+
+
+# 5 Visualization & Analysis
+# -----------------------------------------------------  
+
+            
+d8a = d8.ReadAsArray().tolist()
+d8b = []
+counter = 0
+for i in range(len(d8a)):
+    d8b.append([])
+    for j in range(len(d8a[i])):
+        if d8a[i][j] == 0:
+            d8b[i].append(0)
+        else:
+            counter += 1
+            d8b[i].append(counter)            
+
